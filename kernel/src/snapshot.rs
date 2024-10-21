@@ -76,7 +76,7 @@ impl LogSegment {
         Ok(batches)
     }
 
-    fn read_metadata(&self, engine: &dyn Engine) -> DeltaResult<Option<(Metadata, Protocol)>> {
+    fn read_metadata(&self, engine: &dyn Engine) -> DeltaResult<(Metadata, Protocol)> {
         let data_batches = self.replay_for_metadata(engine)?;
         let mut metadata_opt: Option<Metadata> = None;
         let mut protocol_opt: Option<Protocol> = None;
@@ -94,7 +94,7 @@ impl LogSegment {
             }
         }
         match (metadata_opt, protocol_opt) {
-            (Some(m), Some(p)) => Ok(Some((m, p))),
+            (Some(m), Some(p)) => Ok((m, p)),
             (None, Some(_)) => Err(Error::MissingMetadata),
             (Some(_), None) => Err(Error::MissingProtocol),
             _ => Err(Error::MissingMetadataAndProtocol),
@@ -225,9 +225,7 @@ impl Snapshot {
         version: Version,
         engine: &dyn Engine,
     ) -> DeltaResult<Self> {
-        let (metadata, protocol) = log_segment
-            .read_metadata(engine)?
-            .ok_or(Error::MissingMetadata)?;
+        let (metadata, protocol) = log_segment.read_metadata(engine)?;
         let schema = metadata.schema()?;
         let column_mapping_mode = match metadata.configuration.get(COLUMN_MAPPING_MODE_KEY) {
             Some(mode) if protocol.min_reader_version >= 2 => mode.as_str().try_into(),
@@ -340,6 +338,7 @@ fn read_last_checkpoint(
 }
 
 /// List all log files after a given checkpoint.
+/// This function returns the commit file paths in reverse sorted order.
 fn list_log_files_with_checkpoint(
     checkpoint_metadata: &CheckpointMetadata,
     fs_client: &dyn FileSystemClient,
