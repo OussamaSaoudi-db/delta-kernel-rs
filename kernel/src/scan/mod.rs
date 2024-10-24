@@ -477,24 +477,26 @@ fn transform_to_logical_internal(
     // need to add back partition cols and/or fix-up mapped columns
     let all_fields = all_fields
         .iter()
-        .map(|field| match field {
-            ColumnType::Partition(field_idx) => {
-                let field = global_state
-                    .logical_schema
-                    .fields
-                    .get_index(*field_idx)
-                    .ok_or_else(|| {
-                        Error::generic(
+        .map(|field| -> DeltaResult<_> {
+            match field {
+                ColumnType::Partition(field_idx) => {
+                    let field = global_state
+                        .logical_schema
+                        .fields
+                        .get_index(*field_idx)
+                        .ok_or_else(|| {
+                            Error::generic(
                             "logical schema did not contain expected field, can't transform data",
                         )
-                    })?
-                    .1;
-                let name = field.physical_name(global_state.column_mapping_mode)?;
-                let value_expression =
-                    parse_partition_value(partition_values.get(name), field.data_type())?;
-                Ok::<Expression, Error>(value_expression.into())
+                        })?
+                        .1;
+                    let name = field.physical_name(global_state.column_mapping_mode)?;
+                    let value_expression =
+                        parse_partition_value(partition_values.get(name), field.data_type())?;
+                    Ok(value_expression.into())
+                }
+                ColumnType::Selected(field_name) => Ok(Expression::column(field_name)),
             }
-            ColumnType::Selected(field_name) => Ok(Expression::column(field_name)),
         })
         .try_collect()?;
     let read_expression = Expression::Struct(all_fields);
