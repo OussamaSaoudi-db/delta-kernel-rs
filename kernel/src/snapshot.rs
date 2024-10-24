@@ -338,7 +338,8 @@ fn read_last_checkpoint(
 }
 
 /// List all log files after a given checkpoint.
-/// This function returns the commit file paths in reverse sorted order.
+/// This function returns the commit file paths in reverse sorted order. In other words, the newest
+/// file paths are first, and the oldest file paths are last.
 fn list_log_files_with_checkpoint(
     checkpoint_metadata: &CheckpointMetadata,
     fs_client: &dyn FileSystemClient,

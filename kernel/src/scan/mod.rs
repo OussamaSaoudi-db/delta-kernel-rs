@@ -480,7 +480,7 @@ fn transform_to_logical_internal(
         .map(|field| -> DeltaResult<_> {
             match field {
                 ColumnType::Partition(field_idx) => {
-                    let field = global_state
+                    let (_, field) = global_state
                         .logical_schema
                         .fields
                         .get_index(*field_idx)
@@ -488,8 +488,7 @@ fn transform_to_logical_internal(
                             Error::generic(
                             "logical schema did not contain expected field, can't transform data",
                         )
-                        })?
-                        .1;
+                        })?;
                     let name = field.physical_name(global_state.column_mapping_mode)?;
                     let value_expression =
                         parse_partition_value(partition_values.get(name), field.data_type())?;
