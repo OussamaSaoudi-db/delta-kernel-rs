@@ -12,6 +12,7 @@ use super::{TableChanges, CDF_FIELDS};
 /// The result of building a [`TableChanges`] scan over a table. This can be used to get a change
 /// data feed from the table
 #[allow(unused)]
+#[derive(Debug)]
 pub struct TableChangesScan {
     table_changes: Arc<TableChanges>,
     logical_schema: SchemaRef,
